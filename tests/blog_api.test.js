@@ -27,16 +27,27 @@ test('verifies that id is an existing property of blogs', async () => {
 });
 
 test('adds a blog to the db', async () => {
+    const acc = {
+        username: "root",
+        password: "salainen"
+    };
+
+    const login = await api
+        .post('/api/login')
+        .send(acc);
+
     const newBlog = {
         title: "Test",
         author: "Tester",
         url: "asklfa",
-        likes: 0
+        likes: 0,
+        user: "62a24ef335b67da5d69d871f"
     };
 
     await api
         .post('/api/blogs')
-        .send(newBlog);
+        .send(newBlog)
+        .set({Authorization: `bearer ${login.body.token}`});
 
     const blogsAtEnd = await Blog.find({});
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
@@ -44,6 +55,26 @@ test('adds a blog to the db', async () => {
     const titles = blogsAtEnd.map(b => b.title);
     expect(titles).toContain('Test');
 });
+
+test('fails to add a blog to the db due to token error', async () => {
+    const newBlog = {
+        title: "Test",
+        author: "Tester",
+        url: "asklfa",
+        likes: 0,
+        user: "62a24ef335b67da5d69d871f"
+    };
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401);
+
+    const blogsAtEnd = await Blog.find({});
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+});
+
+
 
 test('default property likes is zero', async () => {
     const newBlog = {
