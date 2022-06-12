@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 const getTokenFrom = (request, response, next) => {
     const authorization = request.get('authorization');
     if(authorization && authorization.toLowerCase().startsWith('bearer ')){
@@ -9,9 +11,9 @@ const getTokenFrom = (request, response, next) => {
 
 const userExtractor = (request, response, next) => {
     const token = request.token;
-
     if(token){
-        request.user = token.id;
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+        request.user = decodedToken.id;
     }
 
     next();
